@@ -130,6 +130,36 @@ async def check_prices_loop():
                             f"{links_html}"
                         )
                         await telegram_notifier.send_notification(msg)
+                    elif not t.get('warning_sent'):
+                        # Early warning check
+                        symbol_upper = t['symbol'].upper()
+                        distance = abs(current_price - target)
+                        
+                        is_wti_warning = "WTI" in symbol_upper and distance <= 0.50
+                        is_gold_warning = "XAU" in symbol_upper and distance <= 1.00
+                        
+                        if is_wti_warning or is_gold_warning:
+                            logger.info(f"Early Warning: {t['symbol']} at {current_price} target {target} distance {distance}")
+                            await database.mark_warning_sent(t['id'])
+                            
+                            source_icon = "🤖" if t.get('source') == 'polymarket' else "👤"
+                            pyth_encoded = t['symbol'].replace("/", "%2F")
+                            pyth_link = f"https://pythdata.app/explore/{pyth_encoded}"
+                            
+                            links_html = f"🔍 <a href='{pyth_link}'>Veriyi Kontrol Et (Pyth)</a>"
+                            if t.get('source') == 'polymarket':
+                                links_html += f"\n🎲 <a href='{t['url']}'>Bet Al (Polymarket)</a>"
+                            
+                            msg = (
+                                f"⚠️ <b>DİKKAT! HEDEFE ÇOK AZ KALDI!</b> ⚠️ {source_icon}\n\n"
+                                f"<b>Varlık:</b> {t['symbol']}\n"
+                                f"<b>Hedef Fiyat:</b> {target}\n"
+                                f"<b>Anlık Fiyat:</b> {current_price}\n"
+                                f"<b>Kalan Fark:</b> ${distance:.2f}\n\n"
+                                f"Hedefe değmek üzere, tetikte olun!\n\n"
+                                f"{links_html}"
+                            )
+                            await telegram_notifier.send_notification(msg)
 
         except Exception as e:
             logger.error(f"Fatal error in tracker engine loop: {e}")

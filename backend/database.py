@@ -13,9 +13,14 @@ async def init_db():
                 target_price REAL NOT NULL,
                 condition TEXT NOT NULL,
                 status TEXT DEFAULT 'active',
-                source TEXT DEFAULT 'manual'
+                source TEXT DEFAULT 'manual',
+                warning_sent INTEGER DEFAULT 0
             )
         """)
+        try:
+            await db.execute("ALTER TABLE trackers ADD COLUMN warning_sent INTEGER DEFAULT 0")
+        except aiosqlite.OperationalError:
+            pass
         await db.commit()
 
 async def add_tracker(url: str, symbol: str, pyth_id: str, target_price: float, condition: str, source: str = 'manual'):
@@ -44,6 +49,11 @@ async def get_all_trackers():
 async def mark_tracker_triggered(tracker_id: int):
     async with aiosqlite.connect(DB_FILE) as db:
         await db.execute("UPDATE trackers SET status = 'triggered' WHERE id = ?", (tracker_id,))
+        await db.commit()
+
+async def mark_warning_sent(tracker_id: int):
+    async with aiosqlite.connect(DB_FILE) as db:
+        await db.execute("UPDATE trackers SET warning_sent = 1 WHERE id = ?", (tracker_id,))
         await db.commit()
 
 async def delete_tracker(tracker_id: int):

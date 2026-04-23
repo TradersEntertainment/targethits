@@ -106,3 +106,12 @@ async def get_market_info():
         "current_month": display_month,
         "instruction": f"WTI {display_month} aktif ay değişimi uyarısı."
     }
+
+@app.post("/api/test-telegram")
+async def test_telegram():
+    import telegram_notifier
+    try:
+        await telegram_notifier.send_notification("🔔 <b>Sistem Testi</b>\n\nTelegram bildirimleri başarıyla çalışıyor! Quantum Pyth Tracker devrede.")
+        return {"message": "Test bildirimi gönderildi."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
