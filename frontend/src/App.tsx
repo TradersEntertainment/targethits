@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Activity, ExternalLink, Trash2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = "http://localhost:8000/api"; // In development we use localhost, in modern deploy we can set a proxy or env
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 interface Tracker {
   id: number;
