@@ -81,6 +81,7 @@ async def delete_tracker(tracker_id: int):
 @app.get("/api/market-info")
 async def get_market_info():
     import wti_rollover_checker
+    import wti_contract_resolver
     from datetime import datetime
     now = datetime.now()
     
@@ -101,10 +102,16 @@ async def get_market_info():
         display_date = wti_rollover_checker.get_wti_alert_date(next_year, next_month)
         display_month = datetime(next_year, next_month, 1).strftime("%B")
 
+    # Get current active WTI contract info
+    active_symbol, del_month, del_year = wti_contract_resolver.get_active_wti_symbol()
+    rollover_info = wti_contract_resolver.get_next_rollover_info()
+
     return {
         "wti_alert_date": display_date,
         "current_month": display_month,
-        "instruction": f"WTI {display_month} aktif ay değişimi uyarısı."
+        "instruction": f"WTI {display_month} aktif ay değişimi uyarısı.",
+        "active_wti_symbol": active_symbol,
+        "next_rollover": rollover_info["rollover_utc"].isoformat() if rollover_info else None,
     }
 
 @app.post("/api/test-telegram")
