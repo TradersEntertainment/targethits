@@ -24,6 +24,7 @@ async def init_db():
             ("warning_sent", "0"),
             ("created_at", "''"),
             ("triggered_at", "''"),
+            ("last_warning_distance", "999"),
         ]:
             try:
                 await db.execute(f"ALTER TABLE trackers ADD COLUMN {col} TEXT DEFAULT {default}")
@@ -67,6 +68,15 @@ async def mark_tracker_triggered(tracker_id: int):
 async def mark_warning_sent(tracker_id: int):
     async with aiosqlite.connect(DB_FILE) as db:
         await db.execute("UPDATE trackers SET warning_sent = 1 WHERE id = ?", (tracker_id,))
+        await db.commit()
+
+async def update_warning_distance(tracker_id: int, distance: float):
+    """Store the last distance at which a progressive warning was sent."""
+    async with aiosqlite.connect(DB_FILE) as db:
+        await db.execute(
+            "UPDATE trackers SET last_warning_distance = ?, warning_sent = 1 WHERE id = ?",
+            (distance, tracker_id)
+        )
         await db.commit()
 
 async def delete_tracker(tracker_id: int):

@@ -286,36 +286,60 @@ async def check_prices_loop():
                         )
                         await telegram_notifier.send_notification(msg)
 
-                    elif not t.get('warning_sent'):
-                        # Early warning check
+                    else:
+                        # Progressive early warning system
                         symbol_upper = t['symbol'].upper()
                         distance = abs(current_price - target)
 
-                        is_wti_warning = "WTI" in symbol_upper and distance <= 0.50
-                        is_gold_warning = "XAU" in symbol_upper and distance <= 1.00
+                        # Determine warning zone and step size per asset
+                        warning_zone = 0
+                        step_size = 0
+                        if "WTI" in symbol_upper:
+                            warning_zone = 0.50
+                            step_size = 0.10
+                        elif "XAU" in symbol_upper:
+                            warning_zone = 1.00
+                            step_size = 0.25
+                        elif "XAG" in symbol_upper:
+                            warning_zone = 0.50
+                            step_size = 0.10
 
-                        if is_wti_warning or is_gold_warning:
-                            logger.info(f"Early Warning: {t['symbol']} at {current_price} target {target} distance {distance}")
-                            await database.mark_warning_sent(t['id'])
+                        if warning_zone > 0 and distance <= warning_zone:
+                            # Get the last warning distance (default 999 = never warned)
+                            last_dist = float(t.get('last_warning_distance') or 999)
 
-                            source_icon = "🤖" if t.get('source') == 'polymarket' else "👤"
-                            pyth_encoded = t['symbol'].replace("/", "%2F")
-                            pyth_link = f"https://pythdata.app/explore/{pyth_encoded}"
+                            # Calculate which step threshold we're at
+                            # E.g. for WTI with step 0.10: thresholds are 0.50, 0.40, 0.30, 0.20, 0.10
+                            current_threshold = int(distance / step_size) * step_size
 
-                            links_html = f"🔍 <a href='{pyth_link}'>Veriyi Kontrol Et (Pyth)</a>"
-                            if t.get('source') == 'polymarket':
-                                links_html += f"\n🎲 <a href='{t['url']}'>Bet Al (Polymarket)</a>"
+                            # Only send if we've crossed a new threshold closer than last time
+                            if current_threshold < last_dist:
+                                logger.info(
+                                    f"Progressive Warning: {t['symbol']} at {current_price} "
+                                    f"target {target} distance {distance:.2f} threshold {current_threshold:.2f}"
+                                )
+                                await database.update_warning_distance(t['id'], current_threshold)
 
-                            msg = (
-                                f"⚠️ <b>DİKKAT! HEDEFE ÇOK AZ KALDI!</b> ⚠️ {source_icon}\n\n"
-                                f"<b>Varlık:</b> {t['symbol']}\n"
-                                f"<b>Hedef Fiyat:</b> {target}\n"
-                                f"<b>Anlık Fiyat:</b> {current_price}\n"
-                                f"<b>Kalan Fark:</b> ${distance:.2f}\n\n"
-                                f"Hedefe değmek üzere, tetikte olun!\n\n"
-                                f"{links_html}"
-                            )
-                            await telegram_notifier.send_notification(msg)
+                                source_icon = "🤖" if t.get('source') == 'polymarket' else "👤"
+                                pyth_encoded = t['symbol'].replace("/", "%2F")
+                                pyth_link = f"https://pythdata.app/explore/{pyth_encoded}"
+
+                                links_html = f"🔍 <a href='{pyth_link}'>Veriyi Kontrol Et (Pyth)</a>"
+                                if t.get('source') == 'polymarket':
+                                    links_html += f"\n🎲 <a href='{t['url']}'>Bet Al (Polymarket)</a>"
+
+                                urgency = "🔴" if distance <= step_size else "🟡" if distance <= step_size * 3 else "⚠️"
+
+                                msg = (
+                                    f"{urgency} <b>HEDEFE YAKLAŞIYOR!</b> {urgency} {source_icon}\n\n"
+                                    f"<b>Varlık:</b> {t['symbol']}\n"
+                                    f"<b>Hedef Fiyat:</b> {target}\n"
+                                    f"<b>Anlık Fiyat:</b> {current_price}\n"
+                                    f"<b>Kalan Fark:</b> ${distance:.2f}\n\n"
+                                    f"Hedefe değmek üzere, tetikte olun!\n\n"
+                                    f"{links_html}"
+                                )
+                                await telegram_notifier.send_notification(msg)
 
         except Exception as e:
             logger.error(f"Fatal error in tracker engine loop: {e}")

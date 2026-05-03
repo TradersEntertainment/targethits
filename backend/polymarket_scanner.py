@@ -6,8 +6,9 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
-# Gold symbol is static (no rollover)
+# Gold and Silver symbols are static (no rollover)
 GOLD_PYTH_SYMBOL = "Metal.XAU/USD"
+SILVER_PYTH_SYMBOL = "Metal.XAG/USD"
 
 # Keywords that indicate a price-target market
 PRICE_KEYWORDS = ["hit", "reach", "above", "below", "close", "price", "drop", "rise", "fall"]
@@ -49,6 +50,12 @@ def _get_dynamic_asset_map(symbol_to_id: dict):
         asset_map["Gold"] = {"symbol": GOLD_PYTH_SYMBOL, "pyth_id": gold_pyth_id}
     else:
         logger.error(f"Gold symbol {GOLD_PYTH_SYMBOL} not found in Pyth cache!")
+
+    silver_pyth_id = symbol_to_id.get(SILVER_PYTH_SYMBOL)
+    if silver_pyth_id:
+        asset_map["Silver"] = {"symbol": SILVER_PYTH_SYMBOL, "pyth_id": silver_pyth_id}
+    else:
+        logger.error(f"Silver symbol {SILVER_PYTH_SYMBOL} not found in Pyth cache!")
 
     return asset_map
 
@@ -162,6 +169,8 @@ async def scan_and_get_targets(current_prices: dict, symbol_to_id: dict):
                 aliases.extend(["crude oil", "crude", "oil price"])
             elif asset_lower == "gold":
                 aliases.extend(["xau", "gold price"])
+            elif asset_lower == "silver":
+                aliases.extend(["xag", "silver price"])
 
             if not any(alias in lower_title for alias in aliases):
                 continue
