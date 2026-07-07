@@ -198,3 +198,38 @@ def get_next_rollover_info(now_utc=None):
         "current_delivery_month": del_month,
         "current_delivery_year": del_year,
     }
+
+
+def is_wti_contract_expired(symbol: str, current_delivery_month: int, current_delivery_year: int) -> bool:
+    """Checks if a WTI symbol represents an expired contract compared to the current active one."""
+    if not symbol.startswith("Commodities.WTI") or not symbol.endswith("/USD"):
+        return False
+        
+    try:
+        # Extract code and year digit
+        # Commodities.WTI{code}{digit}/USD
+        middle = symbol.split("Commodities.WTI")[-1].split("/")[0]
+        if len(middle) < 2:
+            return False
+            
+        code = middle[0]
+        year_digit = int(middle[1:])
+        
+        # Get delivery month from code
+        rev_codes = {v: k for k, v in MONTH_CODES.items()}
+        del_month = rev_codes.get(code.upper())
+        if not del_month:
+            return False
+            
+        # Reconstruct year assuming same decade as current_delivery_year
+        base_year = (current_delivery_year // 10) * 10
+        del_year = base_year + year_digit
+        
+        if del_year < current_delivery_year:
+            return True
+        elif del_year == current_delivery_year and del_month < current_delivery_month:
+            return True
+            
+        return False
+    except Exception:
+        return False

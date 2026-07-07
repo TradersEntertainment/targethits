@@ -30,13 +30,47 @@ async def init_feeds_cache():
     except Exception as e:
         logger.error(f"Failed to fetch pyth feeds cache: {e}")
 
-def get_pyth_id_from_url(url: str) -> str:
-    """Extracts symbol from url and looks up the ID."""
-    # E.g. https://pythdata.app/explore/Commodities.WTIM6%2FUSD
+def get_pyth_id_from_url(url: str) -> tuple[str, str | None]:
+    """Extracts symbol from url and looks up the ID, supporting both old and new Pyth website URLs."""
     import urllib.parse
-    parsed = urllib.parse.unquote(url)
-    symbol = parsed.split("/explore/")[-1] 
-    return symbol, symbol_to_id_cache.get(symbol)
+    import re
+    
+    parsed = urllib.parse.unquote(url).rstrip('/')
+    
+    # Try to find the symbol block after common path prefixes
+    symbol_part = None
+    for prefix in ["/explore/", "/price-feeds/"]:
+        if prefix in parsed:
+            symbol_part = parsed.split(prefix)[-1]
+            break
+            
+    if not symbol_part:
+        # Fallback to last segment if prefix not found
+        symbol_part = parsed.split('/')[-1]
+        
+    # Try direct lookup
+    if symbol_part in symbol_to_id_cache:
+        return symbol_part, symbol_to_id_cache[symbol_part]
+        
+    # Helper to normalize a string for comparison (lowercase, keep only alphanumeric or replace delimiters with -)
+    def normalize(s: str) -> str:
+        norm = s.lower()
+        norm = re.sub(r'[\./_\-\s%]+', '-', norm)
+        return norm.strip('-')
+
+    normalized_part = normalize(symbol_part)
+    
+    # Check against normalized cache keys
+    for sym, fid in symbol_to_id_cache.items():
+        if normalize(sym) == normalized_part:
+            return sym, fid
+            
+    # Fuzzy substring match
+    for sym, fid in symbol_to_id_cache.items():
+        if normalized_part in normalize(sym) or normalize(sym) in normalized_part:
+            return sym, fid
+
+    return symbol_part, None
 
 async def get_latest_prices(pyth_ids: list[str]) -> dict:
     """

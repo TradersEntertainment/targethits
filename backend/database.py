@@ -142,3 +142,24 @@ async def get_tracker_stats() -> dict:
             "polymarket_active": poly_count,
             "manual_active": manual_count,
         }
+
+
+async def deactivate_expired_wti_trackers(current_month: int, current_year: int) -> int:
+    """Finds all active WTI trackers in the DB and deactivates them if they are expired."""
+    import wti_contract_resolver
+    async with aiosqlite.connect(DB_FILE) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute("SELECT id, symbol FROM trackers WHERE status = 'active'")
+        rows = await cursor.fetchall()
+        
+        deactivated_count = 0
+        for row in rows:
+            symbol = row['symbol']
+            if wti_contract_resolver.is_wti_contract_expired(symbol, current_month, current_year):
+                await db.execute("UPDATE trackers SET status = 'expired' WHERE id = ?", (row['id'],))
+                deactivated_count += 1
+                
+        if deactivated_count > 0:
+            await db.commit()
+            
+        return deactivated_count

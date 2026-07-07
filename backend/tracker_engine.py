@@ -31,6 +31,17 @@ async def _handle_rollover():
     if _current_wti_symbol is None:
         _current_wti_symbol = new_symbol
         logger.info(f"WTI contract initialized: {new_symbol}")
+        
+        # Clean up any expired contract trackers on startup
+        _, del_month, del_year = wti_contract_resolver.get_active_wti_symbol()
+        count = await database.deactivate_expired_wti_trackers(del_month, del_year)
+        if count > 0:
+            logger.info(f"Startup clean: Deactivated {count} expired WTI trackers.")
+            msg = (
+                f"🧹 <b>Sistem Başlangıç Temizliği</b>\n\n"
+                f"Veritabanında kalmış {count} adet eski/süresi geçmiş WTI kontrat alarmı deaktif edildi."
+            )
+            await telegram_notifier.send_notification(msg)
         return
 
     if new_symbol != _current_wti_symbol:

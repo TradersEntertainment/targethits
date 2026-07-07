@@ -83,6 +83,15 @@ export default function App() {
     }
   };
 
+  const handleTestTelegram = async () => {
+    try {
+      await axios.post(`${API_URL}/test-telegram`);
+      alert("✅ Test bildirimi Telegram grubunuza gönderildi!");
+    } catch (err: any) {
+      alert("❌ Hata oluştu: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
   return (
     <div className="min-h-screen p-8 md:p-12 max-w-7xl mx-auto flex flex-col gap-10 font-sans">
       
@@ -113,6 +122,15 @@ export default function App() {
               <Activity size={16} className="text-accent drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
             </motion.div>
           )}
+
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleTestTelegram}
+            className="flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 rounded-full font-bold text-gray-200 transition-all border border-white/10"
+          >
+            🔔 Test Telegram
+          </motion.button>
 
           <motion.button 
             whileHover={{ scale: 1.05 }}
@@ -200,27 +218,56 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="mt-6 flex flex-col gap-2.5 relative z-10">
-                    <a 
-                      href={`https://pythdata.app/explore/${tracker.symbol.replace('/', '%2F')}`}
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-sm font-semibold text-gray-200 transition-all group/btn"
-                    >
-                      Pyth'de İncele <ExternalLink size={14} className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
-                    </a>
+                  {(() => {
+                    const isWTI = tracker.symbol.toUpperCase().includes('WTI');
+                    const isGold = tracker.symbol.toUpperCase().includes('XAU');
+                    const isSilver = tracker.symbol.toUpperCase().includes('XAG');
+                    const assetName = isWTI ? 'WTI' : isGold ? 'Gold' : isSilver ? 'Silver' : tracker.symbol.split('.')[1]?.split('/')[0] || '';
+                    const pythSlug = isWTI ? 'usoilspot' : isGold ? 'metal-xau-usd' : isSilver ? 'metal-xag-usd' : tracker.symbol.toLowerCase().replace('.', '-').replace('/', '-');
                     
-                    {tracker.source === 'polymarket' && (
-                      <a 
-                        href={tracker.url}
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-sm text-blue-400 font-bold transition-all border border-blue-500/20 hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] group/btn2"
-                      >
-                        Bet Al <ExternalLink size={14} className="group-hover/btn2:translate-x-0.5 group-hover/btn2:-translate-y-0.5 transition-transform" />
-                      </a>
-                    )}
-                  </div>
+                    return (
+                      <div className="mt-6 flex flex-col gap-2.5 relative z-10">
+                        <a 
+                          href={`https://pyth.network/price-feeds/${pythSlug}`}
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-xs font-semibold text-gray-200 transition-all group/btn"
+                        >
+                          Pyth'de İncele <ExternalLink size={12} className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                        </a>
+                        
+                        {tracker.source === 'polymarket' && (
+                          <a 
+                            href={tracker.url}
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-xs text-blue-400 font-bold transition-all border border-blue-500/20 hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] group/btn2"
+                          >
+                            🎯 Botun Bulduğu Bet <ExternalLink size={12} className="group-hover/btn2:translate-x-0.5 group-hover/btn2:-translate-y-0.5 transition-transform" />
+                          </a>
+                        )}
+
+                        <div className="flex gap-2">
+                          <a 
+                            href={`https://polymarket.com/search?query=${assetName} Weekly`}
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500/5 hover:bg-blue-500/10 text-[11px] text-blue-300 font-bold transition-all border border-blue-500/10 hover:border-blue-500/30 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)] group/btn3"
+                          >
+                            📅 Haftalık Bet <ExternalLink size={10} className="group-hover/btn3:translate-x-0.5 group-hover/btn3:-translate-y-0.5 transition-transform" />
+                          </a>
+                          <a 
+                            href={`https://polymarket.com/search?query=${assetName} Monthly`}
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 text-[11px] text-purple-300 font-bold transition-all border border-purple-500/10 hover:border-purple-500/30 hover:shadow-[0_0_10px_rgba(168,85,247,0.15)] group/btn4"
+                          >
+                            🌙 Aylık Bet <ExternalLink size={10} className="group-hover/btn4:translate-x-0.5 group-hover/btn4:-translate-y-0.5 transition-transform" />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               ))}
             </AnimatePresence>
