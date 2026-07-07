@@ -11,7 +11,7 @@ GOLD_PYTH_SYMBOL = "Metal.XAU/USD"
 SILVER_PYTH_SYMBOL = "Metal.XAG/USD"
 
 # Keywords that indicate a price-target market
-PRICE_KEYWORDS = ["hit", "reach", "above", "below", "close", "price", "drop", "rise", "fall"]
+PRICE_KEYWORDS = ["hit", "reach"]
 
 # Calendar month names for filtering
 MONTH_NAMES = [
