@@ -64,15 +64,19 @@ async def fetch_active_events():
     events = []
     try:
         async with httpx.AsyncClient() as client:
-            # Polymarket pagination
-            for i in range(10):  # Fetch up to 5000 events
+            # Polymarket pagination (Max allowed offset is 2000, requesting past that causes 422)
+            for i in range(5):  # Fetch up to 2500 events
                 url = f"https://gamma-api.polymarket.com/events?active=true&closed=false&limit=500&offset={i*500}"
-                resp = await client.get(url, timeout=15.0)
-                resp.raise_for_status()
-                data = resp.json()
-                if not data:
+                try:
+                    resp = await client.get(url, timeout=15.0)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    if not data:
+                        break
+                    events.extend(data)
+                except httpx.HTTPStatusError as he:
+                    logger.warning(f"Polymarket API returned status {he.response.status_code} for offset {i*500}. Stopping pagination.")
                     break
-                events.extend(data)
     except Exception as e:
         logger.error(f"Failed to fetch polymarket events: {e}")
     return events
