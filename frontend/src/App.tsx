@@ -222,8 +222,9 @@ export default function App() {
                     const isWTI = tracker.symbol.toUpperCase().includes('WTI');
                     const isGold = tracker.symbol.toUpperCase().includes('XAU');
                     const isSilver = tracker.symbol.toUpperCase().includes('XAG');
-                    const assetName = isWTI ? 'WTI' : isGold ? 'Gold' : isSilver ? 'Silver' : tracker.symbol.split('.')[1]?.split('/')[0] || '';
-                    const pythSlug = isWTI ? 'usoilspot' : isGold ? 'metal-xau-usd' : isSilver ? 'metal-xag-usd' : tracker.symbol.toLowerCase().replace('.', '-').replace('/', '-');
+                    const isSPY = tracker.symbol.toUpperCase().includes('SPY');
+                    const assetName = isWTI ? 'WTI' : isGold ? 'Gold' : isSilver ? 'Silver' : isSPY ? 'SPY' : tracker.symbol.split('.')[1]?.split('/')[0] || '';
+                    const pythSlug = isWTI ? 'usoilspot' : isGold ? 'metal-xau-usd' : isSilver ? 'metal-xag-usd' : isSPY ? 'us-spy-usd' : tracker.symbol.toLowerCase().replace('.', '-').replace('/', '-');
                     
                     return (
                       <div className="mt-6 flex flex-col gap-2.5 relative z-10">

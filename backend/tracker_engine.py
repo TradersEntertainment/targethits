@@ -314,6 +314,9 @@ async def check_prices_loop():
                         elif "XAG" in symbol_upper:
                             warning_zone = 0.50
                             step_size = 0.10
+                        elif "SPY" in symbol_upper:
+                            warning_zone = 1.00
+                            step_size = 0.30
 
                         if warning_zone > 0 and distance <= warning_zone:
                             # Get the last warning distance (default 999 = never warned)

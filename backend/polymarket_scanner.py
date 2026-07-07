@@ -6,9 +6,10 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
-# Gold and Silver symbols are static (no rollover)
+# Gold, Silver, and SPY symbols are static (no rollover)
 GOLD_PYTH_SYMBOL = "Metal.XAU/USD"
 SILVER_PYTH_SYMBOL = "Metal.XAG/USD"
+SPY_PYTH_SYMBOL = "Equity.US.SPY/USD"
 
 # Keywords that indicate a price-target market
 PRICE_KEYWORDS = ["hit", "reach"]
@@ -57,12 +58,18 @@ def _get_dynamic_asset_map(symbol_to_id: dict):
     else:
         logger.error(f"Silver symbol {SILVER_PYTH_SYMBOL} not found in Pyth cache!")
 
+    spy_pyth_id = symbol_to_id.get(SPY_PYTH_SYMBOL)
+    if spy_pyth_id:
+        asset_map["SPY"] = {"symbol": SPY_PYTH_SYMBOL, "pyth_id": spy_pyth_id}
+    else:
+        logger.error(f"SPY symbol {SPY_PYTH_SYMBOL} not found in Pyth cache!")
+
     return asset_map
 
 
 async def fetch_active_events():
     events_dict = {}
-    queries = ["WTI", "Gold", "Silver"]
+    queries = ["WTI", "Gold", "Silver", "SPY"]
     try:
         async with httpx.AsyncClient() as client:
             for q in queries:
@@ -176,6 +183,8 @@ async def scan_and_get_targets(current_prices: dict, symbol_to_id: dict):
                 aliases.extend(["xau", "gold price"])
             elif asset_lower == "silver":
                 aliases.extend(["xag", "silver price"])
+            elif asset_lower == "spy":
+                aliases.extend(["s&p 500", "s&p500", "spy etf", "spy price"])
 
             if not any(alias in lower_title for alias in aliases):
                 continue
