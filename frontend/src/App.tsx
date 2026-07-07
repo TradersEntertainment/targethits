@@ -229,7 +229,7 @@ export default function App() {
                     return (
                       <div className="mt-6 flex flex-col gap-2.5 relative z-10">
                         <a 
-                          href={`https://pyth.network/price-feeds/${pythSlug}`}
+                          href={isSPY ? `https://app.pyth.com/explore/${tracker.symbol.replace('/', '%2F')}` : `https://pyth.network/price-feeds/${pythSlug}`}
                           target="_blank" 
                           rel="noreferrer"
                           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-xs font-semibold text-gray-200 transition-all group/btn"
