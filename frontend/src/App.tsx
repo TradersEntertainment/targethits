@@ -223,7 +223,37 @@ export default function App() {
                     const isGold = tracker.symbol.toUpperCase().includes('XAU');
                     const isSilver = tracker.symbol.toUpperCase().includes('XAG');
                     const isSPY = tracker.symbol.toUpperCase().includes('SPY');
-                    const assetName = isWTI ? 'WTI' : isGold ? 'Gold' : isSilver ? 'Silver' : isSPY ? 'SPY' : tracker.symbol.split('.')[1]?.split('/')[0] || '';
+                    
+                    let assetSlug = '';
+                    if (isWTI) assetSlug = 'wti';
+                    else if (isGold) assetSlug = 'xauusd';
+                    else if (isSilver) assetSlug = 'xagusd';
+                    else if (isSPY) assetSlug = 'spy';
+                    
+                    const months = [
+                      "january", "february", "march", "april", "may", "june",
+                      "july", "august", "september", "october", "november", "december"
+                    ];
+                    
+                    const now = new Date();
+                    const currentMonth = months[now.getMonth()];
+                    const currentYear = now.getFullYear();
+                    
+                    const day = now.getDay();
+                    const monday = new Date(now.getTime());
+                    monday.setDate(now.getDate() - day + (day === 0 ? -6 : 1));
+                    
+                    const mondayMonth = months[monday.getMonth()];
+                    const mondayDay = monday.getDate();
+                    const mondayYear = monday.getFullYear();
+                    
+                    const weeklyLink = assetSlug 
+                      ? `https://polymarket.com/event/will-${assetSlug}-hit-week-of-${mondayMonth}-${mondayDay}-${mondayYear}`
+                      : `https://polymarket.com/search?q=${tracker.symbol.split('.')[1]?.split('/')[0] || tracker.symbol} Weekly`;
+                      
+                    const monthlyLink = assetSlug
+                      ? `https://polymarket.com/event/what-price-will-${assetSlug}-hit-in-${currentMonth}-${currentYear}`
+                      : `https://polymarket.com/search?q=${tracker.symbol.split('.')[1]?.split('/')[0] || tracker.symbol} Monthly`;
                     
                     return (
                       <div className="mt-6 flex flex-col gap-2.5 relative z-10">
@@ -249,7 +279,7 @@ export default function App() {
 
                         <div className="flex gap-2">
                           <a 
-                            href={`https://polymarket.com/search?query=${assetName} Weekly`}
+                            href={weeklyLink}
                             target="_blank" 
                             rel="noreferrer"
                             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500/5 hover:bg-blue-500/10 text-[11px] text-blue-300 font-bold transition-all border border-blue-500/10 hover:border-blue-500/30 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)] group/btn3"
@@ -257,7 +287,7 @@ export default function App() {
                             📅 Haftalık Bet <ExternalLink size={10} className="group-hover/btn3:translate-x-0.5 group-hover/btn3:-translate-y-0.5 transition-transform" />
                           </a>
                           <a 
-                            href={`https://polymarket.com/search?query=${assetName} Monthly`}
+                            href={monthlyLink}
                             target="_blank" 
                             rel="noreferrer"
                             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 text-[11px] text-purple-300 font-bold transition-all border border-purple-500/10 hover:border-purple-500/30 hover:shadow-[0_0_10px_rgba(168,85,247,0.15)] group/btn4"
