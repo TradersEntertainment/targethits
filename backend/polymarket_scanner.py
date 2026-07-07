@@ -61,25 +61,26 @@ def _get_dynamic_asset_map(symbol_to_id: dict):
 
 
 async def fetch_active_events():
-    events = []
+    events_dict = {}
+    queries = ["WTI", "Gold", "Silver"]
     try:
         async with httpx.AsyncClient() as client:
-            # Polymarket pagination (Max allowed offset is 2000, requesting past that causes 422)
-            for i in range(5):  # Fetch up to 2500 events
-                url = f"https://gamma-api.polymarket.com/events?active=true&closed=false&limit=500&offset={i*500}"
+            for q in queries:
+                url = "https://gamma-api.polymarket.com/public-search"
                 try:
-                    resp = await client.get(url, timeout=15.0)
+                    resp = await client.get(url, params={"q": q}, timeout=15.0)
                     resp.raise_for_status()
                     data = resp.json()
-                    if not data:
-                        break
-                    events.extend(data)
-                except httpx.HTTPStatusError as he:
-                    logger.warning(f"Polymarket API returned status {he.response.status_code} for offset {i*500}. Stopping pagination.")
-                    break
+                    for e in data.get("events", []):
+                        if e.get("active") and not e.get("closed"):
+                            slug = e.get("slug")
+                            if slug:
+                                events_dict[slug] = e
+                except Exception as ex:
+                    logger.warning(f"Polymarket search failed for query '{q}': {ex}")
     except Exception as e:
         logger.error(f"Failed to fetch polymarket events: {e}")
-    return events
+    return list(events_dict.values())
 
 
 def extract_prices_from_title(title: str) -> list[float]:
