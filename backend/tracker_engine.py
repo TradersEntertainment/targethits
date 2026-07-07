@@ -309,8 +309,8 @@ async def check_prices_loop():
                             warning_zone = 0.50
                             step_size = 0.10
                         elif "XAU" in symbol_upper:
-                            warning_zone = 1.00
-                            step_size = 0.25
+                            warning_zone = 5.00
+                            step_size = 1.00
                         elif "XAG" in symbol_upper:
                             warning_zone = 0.50
                             step_size = 0.10
