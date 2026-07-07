@@ -224,12 +224,11 @@ export default function App() {
                     const isSilver = tracker.symbol.toUpperCase().includes('XAG');
                     const isSPY = tracker.symbol.toUpperCase().includes('SPY');
                     const assetName = isWTI ? 'WTI' : isGold ? 'Gold' : isSilver ? 'Silver' : isSPY ? 'SPY' : tracker.symbol.split('.')[1]?.split('/')[0] || '';
-                    const pythSlug = isWTI ? 'usoilspot' : isGold ? 'metal-xau-usd' : isSilver ? 'metal-xag-usd' : isSPY ? 'us-spy-usd' : tracker.symbol.toLowerCase().replace('.', '-').replace('/', '-');
                     
                     return (
                       <div className="mt-6 flex flex-col gap-2.5 relative z-10">
                         <a 
-                          href={isSPY ? `https://app.pyth.com/explore/${tracker.symbol.replace('/', '%2F')}` : `https://pyth.network/price-feeds/${pythSlug}`}
+                          href={`https://app.pyth.com/explore/${tracker.symbol.replace('/', '%2F')}`}
                           target="_blank" 
                           rel="noreferrer"
                           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-xs font-semibold text-gray-200 transition-all group/btn"
